@@ -5,7 +5,16 @@ module.exports = {
     './src/components/**/*.{js,jsx,ts,tsx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        berkshire: ['Berkshire Swash', 'cursive'],
+        gamjaFlower: ['Gamja Flower', 'cursive'],
+      },
+    },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms')({
+      strategy: 'class',
+    }),
+  ],
 }
