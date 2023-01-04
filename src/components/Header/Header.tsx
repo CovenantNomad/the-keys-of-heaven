@@ -1,5 +1,6 @@
 import Spinner from '@components/Spinner/Spinner'
 import React from 'react'
+import { UserType } from 'src/types/types'
 
 interface HeaderProps {
   isLoading: boolean
