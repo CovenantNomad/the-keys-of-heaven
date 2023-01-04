@@ -6,15 +6,13 @@ import MobileButton from './parts/MobileButton'
 interface NavbarProps {}
 
 const Navbar = ({}: NavbarProps) => {
-  const [open, setOpen] = useRecoilState(sidebarState)
-
   return (
     <div className="relative h-20 flex justify-between items-center px-4 ">
-      <div className="text-3xl font-berkshire lg:text-5xl">
+      <h1 className="text-3xl font-berkshire lg:text-5xl">
         The Keys of Heaven
-      </div>
+      </h1>
       <div className="flex items-center">
-        <MobileButton open={open} setOpen={setOpen} />
+        <MobileButton />
       </div>
     </div>
   )

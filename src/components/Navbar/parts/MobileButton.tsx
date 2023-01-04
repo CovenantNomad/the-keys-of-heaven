@@ -1,13 +1,14 @@
 import { Dispatch, SetStateAction } from 'react'
+import { useRecoilState } from 'recoil'
+import { sidebarState } from 'src/state/sidebarState'
 import Close from './Close'
 import Hamburger from './Hamburger'
 
-interface MobileButtonProps {
-  open: boolean
-  setOpen: Dispatch<SetStateAction<boolean>>
-}
+interface MobileButtonProps {}
 
-const MobileButton = ({ open, setOpen }: MobileButtonProps) => {
+const MobileButton = ({}: MobileButtonProps) => {
+  const [open, setOpen] = useRecoilState(sidebarState)
+
   return (
     <button
       onClick={() => setOpen(!open)}

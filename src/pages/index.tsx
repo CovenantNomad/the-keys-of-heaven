@@ -1,43 +1,65 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import Head from 'next/head'
 import Image from 'next/image'
-import { Inter } from '@next/font/google'
-import Layout from '@components/Layout'
-import CardMotion from '@components/CardMotion'
-import FloatingActionButton from '@components/FloatingActionButton'
-import EmailLogin from '@components/SignIn/EmailLogin'
+import { useQuery } from 'react-query'
+// state
 import { useRecoilValue } from 'recoil'
 import { sidebarState } from 'src/state/sidebarState'
+// hooks
+import useAuthState from 'src/hooks/useAuthState'
+// fetch
+import { db } from 'src/config/firebaseConfig'
+import { doc, getDoc } from 'firebase/firestore'
+import { findDeclarations } from 'src/lib/declarations'
+// components
+import Layout from '@components/Layout'
 import Sidebar from '@components/Sidebar'
-import { AnimatePresence } from 'framer-motion'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from 'src/config/firebaseConfig'
+import Header from '@components/Header/Header'
+import AddModal from '@components/Modal/AddModal'
+import FloatingActionButton from '@components/FloatingActionButton'
+import DraggablePoint from '@components/DraggablePoint'
+import Spinner from '@components/Spinner/Spinner'
+import ReadModal from '@components/Modal/ReadModal'
+import { SelectedDeclarationType } from 'src/types/types'
 
-const inter = Inter({ subsets: ['latin'] })
+interface HomeProps {
+  count: number
+}
 
-export default function Home() {
+export default function Home({ count }: HomeProps) {
   const sidebarOpen = useRecoilValue(sidebarState)
+  const [addModalOepn, setAddModalOepn] = useState(false)
+  const [readModalOepn, setReadModalOepn] = useState(false)
+  const [selectedDeclaration, setSelectedDeclaration] =
+    useState<SelectedDeclarationType | null>(null)
+  const [user, _, isLoading] = useAuthState()
+  const userId = user?.uid
   const boardRef = useRef<HTMLDivElement>(null)
   const containerX = useRef(0)
   const containerY = useRef(0)
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      // User is signed in, see docs for a list of available properties
-      // https://firebase.google.com/docs/reference/js/firebase.User
-      console.log(user)
-      // ...
-    } else {
-      console.log('로그인 NO')
-    }
-  })
+  // useEffect(() => {
+  //   if (boardRef.current !== null) {
+  //     const { width, height } = boardRef.current.getBoundingClientRect()
+  //     console.log('컨테이너 너비와 높이: ', width, height)
+  //   }
+  // }, [])
 
-  useEffect(() => {
-    if (boardRef.current !== null) {
-      const { width, height } = boardRef.current.getBoundingClientRect()
-      console.log('컨테이너 너비와 높이: ', width, height)
+  const { isLoading: dataLoading, data } = useQuery(
+    ['findDeclarations', userId],
+    () => findDeclarations(userId!),
+    {
+      enabled: !!userId,
     }
-  }, [])
+  )
+
+  const onClickHandler = ({ tag, declaration }: SelectedDeclarationType) => {
+    setReadModalOepn(true)
+    setSelectedDeclaration({
+      tag,
+      declaration,
+    })
+  }
 
   return (
     <Layout>
@@ -50,7 +72,7 @@ export default function Home() {
 
       <Image
         src={'/images/tree.png'}
-        alt=""
+        alt="tree images for background"
         width={1501}
         height={1500}
         style={{
@@ -61,20 +83,56 @@ export default function Home() {
         }}
         priority={true}
       />
-      <AnimatePresence>{sidebarOpen && <Sidebar />}</AnimatePresence>
+      {sidebarOpen && <Sidebar />}
 
-      <div className="w-full h-[calc(100%-80px)] py-8 px-4 bg-teal-50">
-        <h1 className="text-center font-gamjaFlower text-2xl">
-          현재 1,215개 천국열쇠가 생성되었습니다
-        </h1>
-        <p className="text-center mt-8">
-          로그인하면 예언적선포문을 작성할 수 있습니다
-        </p>
-        <button>로그인하기</button>
-        <EmailLogin />
-        <div className="w-full h-full" ref={boardRef}></div>
-        <FloatingActionButton />
+      <div className="relative w-full h-[calc(100%-80px)] py-8 px-4">
+        <Header isLoading={isLoading} user={user} count={count} />
+
+        <div className="w-full h-full" ref={boardRef}>
+          {dataLoading ? (
+            <Spinner />
+          ) : (
+            data?.map((item, index) => (
+              <DraggablePoint
+                key={item.id}
+                boardRef={boardRef}
+                initialX={item.initialX}
+                initialY={item.initialY}
+                index={index + 1}
+                tag={item.tag}
+                onClickHandler={() =>
+                  onClickHandler({
+                    tag: item.tag,
+                    declaration: item.declaration,
+                  })
+                }
+              />
+            ))
+          )}
+        </div>
+        <FloatingActionButton setOepn={setAddModalOepn} />
+        {addModalOepn && <AddModal setOepn={setAddModalOepn} />}
+        {readModalOepn && (
+          <ReadModal
+            setOepn={setReadModalOepn}
+            selectedDeclaration={selectedDeclaration}
+          />
+        )}
       </div>
     </Layout>
   )
+}
+
+export async function getServerSideProps() {
+  let count
+  const docSnap = await getDoc(doc(db, 'all-declarations', 'totalInfo'))
+  if (docSnap.exists()) {
+    count = docSnap.data().published
+  }
+
+  return {
+    props: {
+      count,
+    },
+  }
 }
