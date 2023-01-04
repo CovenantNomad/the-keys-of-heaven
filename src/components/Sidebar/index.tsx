@@ -5,11 +5,12 @@ import { signInWithPopup, signOut } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db, googleAuthProvider } from 'src/config/firebaseConfig'
 import useAuthState from 'src/hooks/useAuthState'
+import Link from 'next/link'
 
 interface SidebarProps {}
 
 const Sidebar = ({}: SidebarProps) => {
-  const [user, _] = useAuthState()
+  const [user] = useAuthState()
 
   const signInGoogle = () => {
     signInWithPopup(auth, googleAuthProvider)
@@ -65,7 +66,12 @@ const Sidebar = ({}: SidebarProps) => {
       className="bg-[#1e3c72] w-full h-full z-50 flex flex-col items-end px-8 py-8"
     >
       <ul className="text-end flex flex-col gap-y-6">
-        <li className="text-white">예언적 선포문 보기</li>
+        <li className="text-white">
+          <Link href={'/'}>첫화면</Link>
+        </li>
+        <li className="text-white">
+          <Link href={'/declarations'}>예언적 선포문 보기</Link>
+        </li>
         <li className="text-white">선포모드</li>
         <li className="text-white">설명</li>
       </ul>

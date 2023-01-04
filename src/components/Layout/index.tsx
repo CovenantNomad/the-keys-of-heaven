@@ -1,7 +1,5 @@
 import Navbar from '@components/Navbar'
-import Sidebar from '@components/Sidebar'
-import { AnimatePresence } from 'framer-motion'
-import React, { useState } from 'react'
+import React from 'react'
 import { Toaster } from 'react-hot-toast'
 
 interface LayoutProps {
@@ -10,9 +8,9 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <main className="h-screen w-full max-w-xl mx-auto rounded-md shadow-md overflow-hidden md:max-w-3xl md:border">
+    <main className="w-full max-w-xl mx-auto rounded-md shadow-md md:border">
       <Navbar />
-      <section className={`relative h-full`}>{children}</section>
+      {children}
       <Toaster />
     </main>
   )

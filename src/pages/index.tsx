@@ -14,11 +14,11 @@ import { findDeclarations } from 'src/lib/declarations'
 // components
 import Layout from '@components/Layout'
 import Sidebar from '@components/Sidebar'
-import Header from '@components/Header/Header'
+import Header from '@components/Header'
 import AddModal from '@components/Modal/AddModal'
 import FloatingActionButton from '@components/FloatingActionButton'
 import DraggablePoint from '@components/DraggablePoint'
-import Spinner from '@components/Spinner/Spinner'
+import Spinner from '@components/Spinner'
 import ReadModal from '@components/Modal/ReadModal'
 import { SelectedDeclarationType } from 'src/types/types'
 
@@ -70,55 +70,58 @@ export default function Home({ count }: HomeProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Image
-        src={'/images/tree.png'}
-        alt="tree images for background"
-        width={1501}
-        height={1500}
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: 0,
-          transform: 'translateY(-50%)',
-        }}
-        priority={true}
-      />
-      {sidebarOpen && <Sidebar />}
+      <section className="relative h-[calc(100vh-80px)]">
+        <Image
+          src={'/images/tree.png'}
+          alt="tree images for background"
+          width={1501}
+          height={1500}
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: 0,
+            transform: 'translateY(-50%)',
+          }}
+          priority={true}
+        />
 
-      <div className="relative w-full h-[calc(100%-80px)] py-8 px-4">
-        <Header isLoading={isLoading} user={user} count={count} />
+        {sidebarOpen && <Sidebar />}
 
-        <div className="w-full h-full" ref={boardRef}>
-          {dataLoading ? (
-            <Spinner />
-          ) : (
-            data?.map((item, index) => (
-              <DraggablePoint
-                key={item.id}
-                boardRef={boardRef}
-                initialX={item.initialX}
-                initialY={item.initialY}
-                index={index + 1}
-                tag={item.tag}
-                onClickHandler={() =>
-                  onClickHandler({
-                    tag: item.tag,
-                    declaration: item.declaration,
-                  })
-                }
-              />
-            ))
+        <div className="relative w-full h-[calc(100%-80px)] py-8 px-4">
+          <Header isLoading={isLoading} user={user} count={count} />
+
+          <div className="w-full h-full" ref={boardRef}>
+            {dataLoading ? (
+              <Spinner />
+            ) : (
+              data?.map((item, index) => (
+                <DraggablePoint
+                  key={item.id}
+                  boardRef={boardRef}
+                  initialX={item.initialX}
+                  initialY={item.initialY}
+                  index={index + 1}
+                  tag={item.tag}
+                  onClickHandler={() =>
+                    onClickHandler({
+                      tag: item.tag,
+                      declaration: item.declaration,
+                    })
+                  }
+                />
+              ))
+            )}
+          </div>
+          <FloatingActionButton setOepn={setAddModalOepn} />
+          {addModalOepn && <AddModal setOepn={setAddModalOepn} />}
+          {readModalOepn && (
+            <ReadModal
+              setOepn={setReadModalOepn}
+              selectedDeclaration={selectedDeclaration}
+            />
           )}
         </div>
-        <FloatingActionButton setOepn={setAddModalOepn} />
-        {addModalOepn && <AddModal setOepn={setAddModalOepn} />}
-        {readModalOepn && (
-          <ReadModal
-            setOepn={setReadModalOepn}
-            selectedDeclaration={selectedDeclaration}
-          />
-        )}
-      </div>
+      </section>
     </Layout>
   )
 }
