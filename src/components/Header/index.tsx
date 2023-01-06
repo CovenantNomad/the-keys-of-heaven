@@ -10,7 +10,7 @@ interface HeaderProps {
 
 const Header = ({ isLoading, user, count }: HeaderProps) => {
   return (
-    <div>
+    <div className="pb-6">
       <h2 className="text-center text-xl">
         현재 <strong className="text-teal-600">{count}개</strong> 천국열쇠가
         선포되었습니다

@@ -13,7 +13,6 @@ import { sidebarState } from 'src/state/sidebarState'
 interface DeclarationsProps {}
 
 const Declarations = ({}: DeclarationsProps) => {
-  const sidebarOpen = useRecoilValue(sidebarState)
   const [user] = useAuthState()
   const userId = user?.uid
 
@@ -34,16 +33,13 @@ const Declarations = ({}: DeclarationsProps) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <section className="relative h-[calc(100vh-80px)]">
-        {sidebarOpen && <Sidebar />}
-        <div className="relative w-full h-full overflow-y-auto py-8 px-4 flex flex-col gap-y-4">
-          {isLoading ? (
-            <Spinner />
-          ) : (
-            data?.map((item, index) => <ListItem key={index} item={item} />)
-          )}
-        </div>
-      </section>
+      <div className="relative w-full overflow-y-auto py-8 px-4 flex flex-col gap-y-4">
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          data?.map((item, index) => <ListItem key={index} item={item} />)
+        )}
+      </div>
     </Layout>
   )
 }

@@ -9,38 +9,34 @@ interface ReadModalProps {
   selectedDeclaration: SelectedDeclarationType | null
 }
 
-const dropIn = {
-  hidden: {
-    y: '-100vh',
-    opacity: 0,
-  },
-  visible: {
-    y: '0',
-    opacity: 1,
-    transition: {
-      duration: 0.5,
-      type: 'spring',
-      damping: 25,
-      stiffness: 500,
-    },
-  },
-  exit: {
-    y: '100vh',
-    opacity: 0,
-  },
-}
+// const dropIn = {
+//   hidden: {
+//     y: '-100vh',
+//     opacity: 0,
+//   },
+//   visible: {
+//     y: '0',
+//     opacity: 1,
+//     transition: {
+//       duration: 0.5,
+//       type: 'spring',
+//       damping: 25,
+//       stiffness: 500,
+//     },
+//   },
+//   exit: {
+//     y: '100vh',
+//     opacity: 0,
+//   },
+// }
 
 const ReadModal = ({ setOepn, selectedDeclaration }: ReadModalProps) => {
   const [user] = useAuthState()
 
   return (
     <Backdrop onClick={() => setOepn(false)}>
-      <motion.div
-        onClick={(e) => e.stopPropagation()}
-        variants={dropIn}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
+      <div
+        // onClick={(e) => e.stopPropagation()}
         className="relative min-w-[1/3] w-[450px] max-w-[90%] min-h-[50%] max-h-[90%] margin:auto bg-white border border-gray-300 shadow-lg px-6 overflow-y-auto"
       >
         <button
@@ -65,7 +61,7 @@ const ReadModal = ({ setOepn, selectedDeclaration }: ReadModalProps) => {
             </div>
           </div>
         )}
-      </motion.div>
+      </div>
     </Backdrop>
   )
 }

@@ -1,10 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Head from 'next/head'
 import Image from 'next/image'
+import { GetServerSidePropsContext } from 'next'
 import { useQuery } from 'react-query'
-// state
-import { useRecoilValue } from 'recoil'
-import { sidebarState } from 'src/state/sidebarState'
 // hooks
 import useAuthState from 'src/hooks/useAuthState'
 // fetch
@@ -13,7 +11,6 @@ import { doc, getDoc } from 'firebase/firestore'
 import { findDeclarations } from 'src/lib/declarations'
 // components
 import Layout from '@components/Layout'
-import Sidebar from '@components/Sidebar'
 import Header from '@components/Header'
 import AddModal from '@components/Modal/AddModal'
 import FloatingActionButton from '@components/FloatingActionButton'
@@ -27,7 +24,6 @@ interface HomeProps {
 }
 
 export default function Home({ count }: HomeProps) {
-  const sidebarOpen = useRecoilValue(sidebarState)
   const [addModalOepn, setAddModalOepn] = useState(false)
   const [readModalOepn, setReadModalOepn] = useState(false)
   const [selectedDeclaration, setSelectedDeclaration] =
@@ -35,15 +31,20 @@ export default function Home({ count }: HomeProps) {
   const [user, _, isLoading] = useAuthState()
   const userId = user?.uid
   const boardRef = useRef<HTMLDivElement>(null)
-  const containerX = useRef(0)
-  const containerY = useRef(0)
+  const boardX = useRef(0)
+  const boardY = useRef(0)
+  const boardWidth = useRef(0)
+  const boardHeight = useRef(0)
 
-  // useEffect(() => {
-  //   if (boardRef.current !== null) {
-  //     const { width, height } = boardRef.current.getBoundingClientRect()
-  //     console.log('컨테이너 너비와 높이: ', width, height)
-  //   }
-  // }, [])
+  useEffect(() => {
+    if (boardRef.current !== null) {
+      const { width, height, x, y } = boardRef.current.getBoundingClientRect()
+      boardX.current = x
+      boardY.current = y
+      boardWidth.current = width
+      boardHeight.current = height
+    }
+  }, [])
 
   const { isLoading: dataLoading, data } = useQuery(
     ['findDeclarations', userId],
@@ -70,63 +71,61 @@ export default function Home({ count }: HomeProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <section className="relative h-[calc(100vh-80px)]">
-        <Image
-          src={'/images/tree.png'}
-          alt="tree images for background"
-          width={1501}
-          height={1500}
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: 0,
-            transform: 'translateY(-50%)',
-          }}
-          priority={true}
-        />
+      <Image
+        src={'/images/tree.png'}
+        alt="tree images for background"
+        width={1501}
+        height={1500}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: 0,
+          transform: 'translateY(-50%)',
+        }}
+        priority={true}
+      />
 
-        {sidebarOpen && <Sidebar />}
+      <div className="relative w-full h-full pt-6 pb-32 px-4 overflow-hidden">
+        <Header isLoading={isLoading} user={user} count={count} />
 
-        <div className="relative w-full h-[calc(100%-80px)] py-8 px-4">
-          <Header isLoading={isLoading} user={user} count={count} />
-
-          <div className="w-full h-full" ref={boardRef}>
-            {dataLoading ? (
-              <Spinner />
-            ) : (
-              data?.map((item, index) => (
-                <DraggablePoint
-                  key={item.id}
-                  boardRef={boardRef}
-                  initialX={item.initialX}
-                  initialY={item.initialY}
-                  index={index + 1}
-                  tag={item.tag}
-                  onClickHandler={() =>
-                    onClickHandler({
-                      tag: item.tag,
-                      declaration: item.declaration,
-                    })
-                  }
-                />
-              ))
-            )}
-          </div>
-          <FloatingActionButton setOepn={setAddModalOepn} />
-          {addModalOepn && <AddModal setOepn={setAddModalOepn} />}
-          {readModalOepn && (
-            <ReadModal
-              setOepn={setReadModalOepn}
-              selectedDeclaration={selectedDeclaration}
-            />
+        <div className="w-full h-full" ref={boardRef}>
+          {dataLoading ? (
+            <Spinner />
+          ) : (
+            data?.map((item, index) => (
+              <DraggablePoint
+                key={index}
+                boardRef={boardRef}
+                boardX={boardX}
+                boardY={boardY}
+                boardWidth={boardWidth}
+                boardHeight={boardHeight}
+                index={index + 1}
+                item={item}
+                onClickHandler={() =>
+                  onClickHandler({
+                    tag: item.tag,
+                    declaration: item.declaration,
+                  })
+                }
+              />
+            ))
           )}
         </div>
-      </section>
+        <FloatingActionButton setOepn={setAddModalOepn} />
+      </div>
+      {addModalOepn && <AddModal setOepn={setAddModalOepn} />}
+      {readModalOepn && (
+        <ReadModal
+          setOepn={setReadModalOepn}
+          selectedDeclaration={selectedDeclaration}
+        />
+      )}
     </Layout>
   )
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   let count
   const docSnap = await getDoc(doc(db, 'all-declarations', 'totalInfo'))
   if (docSnap.exists()) {
