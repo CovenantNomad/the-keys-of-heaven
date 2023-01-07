@@ -6,11 +6,16 @@ import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db, googleAuthProvider } from 'src/config/firebaseConfig'
 import useAuthState from 'src/hooks/useAuthState'
 import Link from 'next/link'
+import { useRecoilState } from 'recoil'
+import { sidebarState } from 'src/state/sidebarState'
+import { useRouter } from 'next/router'
 
 interface SidebarProps {}
 
 const Sidebar = ({}: SidebarProps) => {
+  const [_, setOpen] = useRecoilState(sidebarState)
   const [user] = useAuthState()
+  const router = useRouter()
 
   const signInGoogle = () => {
     signInWithPopup(auth, googleAuthProvider)
@@ -30,6 +35,7 @@ const Sidebar = ({}: SidebarProps) => {
           }
         }
         toast.success('로그인 하였습니다')
+        setOpen(false)
       })
       .catch((error) => {
         console.log(error.code)
@@ -38,6 +44,7 @@ const Sidebar = ({}: SidebarProps) => {
   }
 
   const signout = () => {
+    setOpen(false)
     signOut(auth)
       .then(() => {
         toast.success('로그아웃 되었습니다')
@@ -45,6 +52,7 @@ const Sidebar = ({}: SidebarProps) => {
       .catch((error) => {
         toast.error(error.message)
       })
+    router.push('/')
   }
 
   return (
@@ -63,17 +71,24 @@ const Sidebar = ({}: SidebarProps) => {
         opacity: 0,
         transition: { duration: 0.4 },
       }}
-      className="bg-[#1e3c72] w-full h-full z-50 flex flex-col items-end px-8 py-8"
+      className="absolute w-full h-full z-50 flex flex-col items-end px-8 py-8 bg-[#1e3c72] "
     >
       <ul className="text-end flex flex-col gap-y-6">
         <li className="text-white">
-          <Link href={'/'}>첫화면</Link>
+          <Link href={'/'}>
+            <button onClick={() => setOpen(false)}>첫화면</button>
+          </Link>
         </li>
         <li className="text-white">
-          <Link href={'/declarations'}>예언적 선포문 보기</Link>
+          <Link href={'/declarations'}>
+            <button onClick={() => setOpen(false)}>예언적 선포문 보기</button>
+          </Link>
         </li>
-        <li className="text-white">선포모드</li>
-        <li className="text-white">설명</li>
+        <li className="text-white">
+          <Link href={'/declarations'}>
+            <button onClick={() => setOpen(false)}>사용설명서</button>
+          </Link>
+        </li>
       </ul>
       <div className="mt-16">
         {user ? (

@@ -25,3 +25,8 @@ interface SelectedDeclarationType {
   tag: string
   declaration: string
 }
+
+interface TestimonyType {
+  content: string
+  createdAt: FieldValue
+}

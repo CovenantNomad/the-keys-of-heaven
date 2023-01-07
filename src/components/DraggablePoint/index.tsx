@@ -1,5 +1,5 @@
 import React, { MutableRefObject } from 'react'
-import { motion, useMotionValue } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { doc, DocumentData, updateDoc } from 'firebase/firestore'
 import { db } from 'src/config/firebaseConfig'
 import { inRange } from 'lodash'
@@ -30,8 +30,8 @@ const DraggablePoint = ({
       drag
       dragConstraints={boardRef}
       style={{
-        left: item.initialX * boardWidth.current,
-        top: item.initialY * boardHeight.current,
+        left: Math.round(item.initialX * boardWidth.current * 1000) / 1000,
+        top: Math.round(item.initialY * boardHeight.current * 1000) / 1000,
       }}
       // onDrag={() => setIsDragging(true)}
       // onDragTransitionEnd={() => setIsDragging(false)}
@@ -51,6 +51,8 @@ const DraggablePoint = ({
           'declarations',
           item.documentId
         )
+
+        console.log('X값: ', valueX, 'Y값: ', valueY)
         await updateDoc(docRef, {
           initialX: valueX <= 0 ? 0.1 : valueX >= 1 ? 0.9 : valueX,
           initialY: valueY <= 0 ? 0 : valueY >= 1 ? 0.9 : valueY,

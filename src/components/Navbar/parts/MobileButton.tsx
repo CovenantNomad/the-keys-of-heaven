@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction } from 'react'
 import { useRecoilState } from 'recoil'
 import { sidebarState } from 'src/state/sidebarState'
-import Close from './Close'
-import Hamburger from './Hamburger'
+import Close from '../../Icons/Close'
+import Hamburger from '../../Icons/Hamburger'
 
 interface MobileButtonProps {}
 

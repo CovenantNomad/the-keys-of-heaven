@@ -1,27 +1,69 @@
 import Layout from '@components/Layout'
-import { query } from 'firebase/firestore'
+import Spinner from '@components/Spinner'
+import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import React from 'react'
-import { useQuery } from 'react-query'
+import React, { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'react-hot-toast'
+import { useQuery, useQueryClient } from 'react-query'
+import { db } from 'src/config/firebaseConfig'
 import useAuthState from 'src/hooks/useAuthState'
 import { findDeclaration } from 'src/lib/declarations'
+import { TestimonyType } from 'src/types/types'
+import { formatDate } from 'src/utils'
 
 interface DetailProps {}
 
 const Detail = ({}: DetailProps) => {
+  const [openInput, setOpenInput] = useState(false)
+  const [docId, setDocId] = useState<string | undefined>(undefined)
   const [user] = useAuthState()
   const userId = user?.uid
   const router = useRouter()
-  const docId = router.query.id
+  const queryClient = useQueryClient()
 
-  // const { isLoading, data } = useQuery(
-  //   ['findDeclaration', [userId, docId]],
-  //   () => findDeclaration(userId!, docId!),
-  //   {
-  //     enabled: !!userId && !!docId,
-  //   }
-  // )
+  const {
+    handleSubmit,
+    register,
+    getValues,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<TestimonyType>()
+
+  useEffect(() => {
+    if (router.query.id !== undefined && typeof router.query.id === 'string') {
+      setDocId(router.query.id)
+    }
+  }, [])
+
+  const { isLoading, data } = useQuery(
+    ['findDeclaration', [userId, docId]],
+    () => findDeclaration(userId!, docId!),
+    {
+      enabled: !!userId && !!docId,
+    }
+  )
+
+  const onSubmitHandler = async (form: TestimonyType) => {
+    if (userId && docId) {
+      const docRef = doc(db, 'users', userId, 'declarations', docId)
+      await updateDoc(docRef, {
+        testimony: {
+          content: form.content,
+          createdAt: serverTimestamp(),
+        },
+      })
+      toast.success('예언적 선포문이 작성되었습니다')
+      queryClient.invalidateQueries(['findDeclaration', [userId, docId]])
+      setOpenInput(false)
+    } else {
+      toast.error(`로그인 상태가 아닙니다.${'\n'} 로그인 후 진행해주세요.`)
+    }
+  }
+
+  console.log(data)
 
   return (
     <Layout>
@@ -33,7 +75,84 @@ const Detail = ({}: DetailProps) => {
       </Head>
 
       <div className="relative w-full overflow-y-auto py-8 px-4 flex flex-col gap-y-4">
-        detail
+        {isLoading ? (
+          <Spinner />
+        ) : data ? (
+          <>
+            <div className="border px-4 pt-3 rounded-lg shadow-md">
+              <div className="flex items-center gap-x-8 py-3 border-b ">
+                <p className="text-gray-500">태그</p>
+                <p>#{data.tag}</p>
+              </div>
+              <div className="pt-3 pb-6">
+                <p className="text-gray-500 mb-2">예언적 선포문</p>
+                <p>{data.declaration}</p>
+              </div>
+            </div>
+            {data.testimony ? (
+              <div className="mt-6">
+                <h4 className="mb-2 text-lg">나의 간증</h4>
+                <div className="border px-4 py-2 rounded-lg shadow-md">
+                  <p className="pt-2 pb-4">{data.testimony.content}</p>
+                  <p className="border-t py-2 text-sm text-gray-500">
+                    2013.01.03
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4">
+                {!openInput ? (
+                  <button
+                    onClick={() => setOpenInput(true)}
+                    className="px-4 py-2 bg-teal-500 text-white"
+                  >
+                    간증문 작성하기
+                  </button>
+                ) : (
+                  <form
+                    onSubmit={handleSubmit(onSubmitHandler)}
+                    className="w-full"
+                  >
+                    <div>
+                      <label htmlFor="content" className="sr-only">
+                        간증문
+                      </label>
+                      <textarea
+                        id="content"
+                        rows={10}
+                        placeholder={'간증문을 입력해 주세요.'}
+                        {...register('content', {
+                          required: true,
+                        })}
+                        className="w-full border pt-3 px-2 focus:outline-none focus:ring-primary focus:border-primary"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-x-6 mt-2">
+                      <button
+                        type="reset"
+                        className="px-4 py-2 bg-red-500 text-white"
+                        onClick={() => {
+                          setOpenInput(false)
+                          reset({ content: '' })
+                        }}
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-teal-500 text-white"
+                      >
+                        작성완료
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <p>데이터없음</p>
+        )}
       </div>
     </Layout>
   )
