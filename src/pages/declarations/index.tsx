@@ -1,14 +1,14 @@
+import Empty from '@components/Empty'
 import Layout from '@components/Layout'
 import ListItem from '@components/ListItem'
 import Sidebar from '@components/Sidebar'
 import Spinner from '@components/Spinner'
+import Stats from '@components/Stats'
 import Head from 'next/head'
 import React from 'react'
 import { useQuery } from 'react-query'
-import { useRecoilValue } from 'recoil'
 import useAuthState from 'src/hooks/useAuthState'
 import { findDeclarations } from 'src/lib/declarations'
-import { sidebarState } from 'src/state/sidebarState'
 
 interface DeclarationsProps {}
 
@@ -21,6 +21,8 @@ const Declarations = ({}: DeclarationsProps) => {
     () => findDeclarations(userId!),
     {
       enabled: !!userId,
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
     }
   )
 
@@ -33,11 +35,30 @@ const Declarations = ({}: DeclarationsProps) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="relative w-full overflow-y-auto py-8 px-4 flex flex-col gap-y-4">
+      <div className="relative h-[calc(100%-5rem)] top-20 py-8 px-4 overflow-y-scroll">
         {isLoading ? (
           <Spinner />
         ) : (
-          data?.map((item, index) => <ListItem key={index} item={item} />)
+          data && (
+            <div>
+              <div className="grid grid-cols-2 gap-x-3 mb-8">
+                <Stats name="결제완료 선포문" stat={data.length || 0} />
+                <Stats
+                  name="실현완료 선포문"
+                  stat={data.filter((item) => item.hasTesimony).length || 0}
+                />
+              </div>
+              {data.length !== 0 ? (
+                <div className="grid grid-cols-1 gap-4">
+                  {data.map((item, index) => (
+                    <ListItem key={index} item={item} />
+                  ))}
+                </div>
+              ) : (
+                <Empty />
+              )}
+            </div>
+          )
         )}
       </div>
     </Layout>

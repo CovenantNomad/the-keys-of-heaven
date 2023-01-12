@@ -71,7 +71,7 @@ const Sidebar = ({}: SidebarProps) => {
         opacity: 0,
         transition: { duration: 0.4 },
       }}
-      className="absolute w-full h-full z-50 flex flex-col items-end px-8 py-8 bg-[#1e3c72] "
+      className="absolute top-20 w-full h-full z-50 flex flex-col items-end px-8 py-8 bg-[#1e3c72] "
     >
       <ul className="text-end flex flex-col gap-y-6">
         <li className="text-white">

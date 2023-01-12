@@ -30,3 +30,8 @@ interface TestimonyType {
   content: string
   createdAt: FieldValue
 }
+
+interface DeclarationFormType {
+  tag: string
+  comments: string
+}

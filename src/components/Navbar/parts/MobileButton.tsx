@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from 'react'
 import { useRecoilState } from 'recoil'
 import { sidebarState } from 'src/state/sidebarState'
 import Close from '../../Icons/Close'

@@ -19,11 +19,9 @@ import Spinner from '@components/Spinner'
 import ReadModal from '@components/Modal/ReadModal'
 import { SelectedDeclarationType } from 'src/types/types'
 
-interface HomeProps {
-  count: number
-}
+interface HomeProps {}
 
-export default function Home({ count }: HomeProps) {
+export default function Home({}: HomeProps) {
   const [addModalOepn, setAddModalOepn] = useState(false)
   const [readModalOepn, setReadModalOepn] = useState(false)
   const [selectedDeclaration, setSelectedDeclaration] =
@@ -78,21 +76,29 @@ export default function Home({ count }: HomeProps) {
         height={1500}
         style={{
           position: 'absolute',
-          top: '50%',
+          top: '60%',
           left: 0,
-          transform: 'translateY(-50%)',
+          transform: 'translateY(-60%)',
         }}
         priority={true}
       />
 
-      <div className="relative w-full h-full pt-6 pb-32 px-4 overflow-hidden">
-        <Header isLoading={isLoading} user={user} count={count} />
+      <div className="relative w-full h-[calc(100%-5rem)] top-20 px-4 overflow-hidden">
+        <Header count={0} />
 
-        <div className="w-full h-full" ref={boardRef}>
-          {dataLoading ? (
+        <div className="relative w-full h-[calc(100%-10rem)]" ref={boardRef}>
+          {isLoading ? (
             <Spinner />
-          ) : (
-            data?.map((item, index) => (
+          ) : !user ? (
+            <p className="text-center text-sm text-gray-500 leading-[1.5] mt-4">
+              로그인하시면 나의 천국열쇠를 작성할 수 있습니다
+              <br />
+              (메뉴바 하단 → 로그인)
+            </p>
+          ) : dataLoading ? (
+            <Spinner />
+          ) : data && boardRef !== null ? (
+            data.map((item, index) => (
               <DraggablePoint
                 key={index}
                 boardRef={boardRef}
@@ -110,6 +116,8 @@ export default function Home({ count }: HomeProps) {
                 }
               />
             ))
+          ) : (
+            <h1>데이터없어요</h1>
           )}
         </div>
         <FloatingActionButton setOepn={setAddModalOepn} />
@@ -123,18 +131,4 @@ export default function Home({ count }: HomeProps) {
       )}
     </Layout>
   )
-}
-
-export async function getServerSideProps(ctx: GetServerSidePropsContext) {
-  let count
-  const docSnap = await getDoc(doc(db, 'all-declarations', 'totalInfo'))
-  if (docSnap.exists()) {
-    count = docSnap.data().published
-  }
-
-  return {
-    props: {
-      count,
-    },
-  }
 }

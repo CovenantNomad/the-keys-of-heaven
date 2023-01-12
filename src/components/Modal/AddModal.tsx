@@ -1,4 +1,10 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import React, {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react'
 import Backdrop from './parts/Backdrop'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -15,15 +21,13 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { db } from 'src/config/firebaseConfig'
-import { useMutation } from 'react-query'
+import { useMutation, useQueryClient } from 'react-query'
+import { debounce } from 'lodash'
+import DeclarationForm from '@components/InputForm/DeclarationForm'
+import { DeclarationFormType } from 'src/types/types'
 
 interface AddModalProps {
   setOepn: Dispatch<SetStateAction<boolean>>
-}
-
-interface FormType {
-  tag: string
-  comments: string
 }
 
 const dropIn = {
@@ -55,10 +59,11 @@ const AddModal = ({ setOepn }: AddModalProps) => {
     getValues,
     setValue,
     formState: { errors },
-  } = useForm<FormType>()
+  } = useForm<DeclarationFormType>()
   const [user] = useAuthState()
+  const queryClient = useQueryClient()
 
-  const submitHandler = async (data: FormType) => {
+  const submitHandler = async (data: DeclarationFormType) => {
     if (user) {
       try {
         await runTransaction(db, async (transition) => {
@@ -88,6 +93,7 @@ const AddModal = ({ setOepn }: AddModalProps) => {
           }
         })
         toast.success('예언적 선포문이 작성되었습니다')
+        queryClient.invalidateQueries(['findDeclarations', user.uid])
         setOepn(false)
       } catch (error) {
         console.log(error)
@@ -99,7 +105,7 @@ const AddModal = ({ setOepn }: AddModalProps) => {
     }
   }
 
-  const onCountWord = () => {
+  const onCountWord = debounce(() => {
     setCount(getValues().comments.length)
     const maxRow = 8
     const rows = getValues().comments.split('\n').length
@@ -111,7 +117,7 @@ const AddModal = ({ setOepn }: AddModalProps) => {
         .join('\n')
       setValue('comments', modifiedText)
     }
-  }
+  }, 300)
 
   return (
     <Backdrop onClick={() => setOepn(false)}>
@@ -121,73 +127,20 @@ const AddModal = ({ setOepn }: AddModalProps) => {
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="min-w-[1/3] w-[450px] max-w-[90%] min-h-[50%] max-h-[90%] margin:auto bg-white border border-gray-300 shadow-lg px-6 overflow-y-auto"
+        className="min-w-[1/3] w-[450px] max-w-[90%] min-h-[40%] max-h-[90%] margin:auto bg-white border border-gray-300 shadow-lg px-6 overflow-y-auto"
       >
-        <form onSubmit={handleSubmit(submitHandler)} className="w-full">
-          <div className="flex items-center justify-between py-6">
-            <button
-              onClick={() => setOepn(false)}
-              type="button"
-              className="font-medium"
-            >
-              취소
-            </button>
-            <h3 className="text-lg">예언적 선포문 작성</h3>
-            <button
-              type="submit"
-              disabled={!user}
-              className="text-teal-600 font-medium"
-            >
-              완료
-            </button>
-          </div>
-
-          <div className="mt-5">
-            <div className="relative">
-              <label htmlFor="tag" className="sr-only">
-                태그
-              </label>
-              <input
-                id="tag"
-                placeholder={'태그를 입력해 주세요. (최대 20자)'}
-                maxLength={20}
-                {...register('tag', {
-                  required: true,
-                })}
-                className="w-full border-b py-3 focus:outline-none focus:ring-primary focus:border-primary"
-              />
-              {errors.tag && (
-                <p className="absolute -top-3 left-0 text-red-600 bg-white w-full">
-                  태그를 입력해야 합니다
-                </p>
-              )}
-            </div>
-            <div className="relative">
-              <label htmlFor="comments" className="sr-only">
-                예언적 선포문
-              </label>
-              <textarea
-                id="comments"
-                rows={8}
-                maxLength={200}
-                onKeyUp={onCountWord}
-                placeholder={'예언적 선포문을 입력해 주세요. (최대 200자)'}
-                {...register('comments', {
-                  required: true,
-                })}
-                className="w-full border-b pt-3 pb-8 focus:outline-none focus:ring-primary focus:border-primary"
-              />
-              <span className="inline-block absolute bottom-1 right-2">
-                {count}/200
-              </span>
-              {errors.tag && (
-                <p className="absolute top-10 left-0 text-red-600 bg-white w-full">
-                  예언적 선포문을 입력해야 합니다
-                </p>
-              )}
-            </div>
-          </div>
-        </form>
+        <DeclarationForm
+          handleSubmit={handleSubmit}
+          submitHandler={submitHandler}
+          register={register}
+          title={'예언적 선포문 작성'}
+          user={user}
+          setOpen={setOepn}
+          errors={errors}
+          count={count}
+          onCountWord={onCountWord}
+          getValues={getValues}
+        />
       </motion.div>
     </Backdrop>
   )

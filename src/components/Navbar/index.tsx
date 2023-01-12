@@ -8,9 +8,9 @@ interface NavbarProps {}
 
 const Navbar = ({}: NavbarProps) => {
   return (
-    <div className="fixed h-20 w-full max-w-[35rem] flex justify-between items-center px-4 sm:pr-0 bg-white z-50">
+    <div className="fixed top-0 left-0 h-20 w-full max-w-xl flex justify-between items-center px-4 bg-white z-30">
       <Link href={'/'}>
-        <h1 className="text-3xl font-berkshire lg:text-5xl">
+        <h1 className="text-2xl font-berkshire lg:text-4xl">
           The Keys of Heaven
         </h1>
       </Link>

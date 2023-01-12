@@ -37,7 +37,7 @@ const ReadModal = ({ setOepn, selectedDeclaration }: ReadModalProps) => {
     <Backdrop onClick={() => setOepn(false)}>
       <div
         // onClick={(e) => e.stopPropagation()}
-        className="relative min-w-[1/3] w-[450px] max-w-[90%] min-h-[50%] max-h-[90%] margin:auto bg-white border border-gray-300 shadow-lg px-6 overflow-y-auto"
+        className="relative min-w-[1/3] w-[450px] max-w-[90%] min-h-[40%] max-h-[90%] margin:auto bg-white border border-gray-300 shadow-lg px-6 overflow-y-auto"
       >
         <button
           onClick={() => setOepn(false)}

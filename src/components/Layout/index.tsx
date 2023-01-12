@@ -1,6 +1,6 @@
 import Navbar from '@components/Navbar'
 import Sidebar from '@components/Sidebar'
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { useRecoilValue } from 'recoil'
 import { sidebarState } from 'src/state/sidebarState'
@@ -11,13 +11,12 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const sidebarOpen = useRecoilValue(sidebarState)
+
   return (
-    <main className="h-screen w-full max-w-xl mx-auto sm:rounded-md sm:shadow-md sm:border">
+    <main className="w-full max-w-xl h-screen sm:mx-auto sm:rounded-md sm:shadow-md sm:border sm:absolute sm:left-[50%] sm:-translate-x-[50%]">
       <Navbar />
-      <section className="relative h-[calc(100vh-80px)] top-20">
-        {sidebarOpen && <Sidebar />}
-        {children}
-      </section>
+      {sidebarOpen && <Sidebar />}
+      {children}
       <Toaster />
     </main>
   )

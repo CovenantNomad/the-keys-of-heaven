@@ -9,4 +9,8 @@
     font-family: "Noto Sans KR", system-ui, sans-serif;
     line-height: 1.5;
   }
+  body {
+    box-sizing: border-box;
+    overflow: hidden;
+  }
 }

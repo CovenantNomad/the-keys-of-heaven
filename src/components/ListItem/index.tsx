@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import Link from 'next/link'
 import {
   arrayRemove,
@@ -15,6 +15,8 @@ import { db } from 'src/config/firebaseConfig'
 import { toast } from 'react-hot-toast'
 import Alert from '@components/Alert'
 import { useQueryClient } from 'react-query'
+import Empty from '@components/Empty'
+import { formatDate } from 'src/utils'
 
 interface ListItemProps {
   item: DocumentData | undefined
@@ -29,7 +31,6 @@ const ListItem = ({ item }: ListItemProps) => {
     if (user) {
       try {
         await runTransaction(db, async (transition) => {
-          console.log('진입')
           const docRef = doc(db, 'users', user.uid, 'declarations', documentId)
           const countRef = doc(db, 'all-declarations', 'totalInfo')
           const countDoc = await transition.get(countRef)
@@ -61,36 +62,23 @@ const ListItem = ({ item }: ListItemProps) => {
   }
 
   return (
-    <div className="border shadow-md rounded-md px-6 py-3">
+    <div className="border shadow-md rounded-md px-6 py-6">
       {item !== undefined ? (
         <>
-          <div className="pt-3 pb-6">
-            <p className="text-gray-500 mb-2">예언적 선포문</p>
-            <p>{item.declaration}</p>
-          </div>
-          <div className="relative flex items-center justify-between gap-x-8 pt-2 border-t">
-            <p className="text-gray-500 text-sm">#{item.tag}</p>
-            <div className="flex gap-x-2">
-              <Link href={`/declarations/${item.documentId}`}>
-                <button className="w-10 h-10 p-2">
-                  <Edit />
-                </button>
-              </Link>
-              <button className="w-10 h-10 p-2" onClick={() => setOpen(true)}>
-                <Delete />
+          <p className="pb-3">{item.declaration}</p>
+          <div className="flex justify-between items-center border-t pt-3">
+            <p className="text-gray-500">
+              {formatDate(item.createdAt.seconds)}
+            </p>
+            <Link href={`/declarations/${item.documentId}`}>
+              <button className="px-4 py-1 text-teal-500 cursor-pointer">
+                수정
               </button>
-            </div>
+            </Link>
           </div>
-          {open && (
-            <Alert
-              open={open}
-              setOpen={setOpen}
-              onActionHandler={() => onDeleteHandler(item.documentId)}
-            />
-          )}
         </>
       ) : (
-        <div>데이터 없음</div>
+        <Empty />
       )}
     </div>
   )
