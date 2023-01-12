@@ -94,6 +94,7 @@ const AddModal = ({ setOepn }: AddModalProps) => {
         })
         toast.success('예언적 선포문이 작성되었습니다')
         queryClient.invalidateQueries(['findDeclarations', user.uid])
+        queryClient.invalidateQueries('getTotalCount')
         setOepn(false)
       } catch (error) {
         console.log(error)

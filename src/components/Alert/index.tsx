@@ -5,12 +5,13 @@ import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { DocumentData } from 'firebase/firestore'
 
 interface AlertProps {
+  isTestimony?: boolean
   open: boolean
   setOpen: Dispatch<SetStateAction<boolean>>
   onActionHandler: () => Promise<void>
 }
 
-const Alert = ({ open, setOpen, onActionHandler }: AlertProps) => {
+const Alert = ({ isTestimony, open, setOpen, onActionHandler }: AlertProps) => {
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={setOpen}>
@@ -60,12 +61,13 @@ const Alert = ({ open, setOpen, onActionHandler }: AlertProps) => {
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      예언적 선포문 삭제
+                      {isTestimony ? '간증문 삭제' : '예언적 선포문 삭제'}
                     </Dialog.Title>
                     <div className="mt-4">
-                      <p className="text-sm text-gray-500">
-                        이 예언적 선포문에 대해서 정말 삭제하시길 원하시나요?
-                        삭제 시, 모든 내용이 삭제되며 복구할 수 없습니다.
+                      <p className="text-sm text-gray-500 whitespace-pre-line">
+                        {isTestimony
+                          ? `간증문을 삭제하시길 원하시나요?\n삭제 시, 해당 간증문은 복구할 수 없습니다.`
+                          : `이 예언적 선포문에 대해서 정말 삭제하시길 원하시나요?\n삭제 시, 모든 내용이 삭제되며 복구할 수 없습니다.`}
                       </p>
                     </div>
                   </div>

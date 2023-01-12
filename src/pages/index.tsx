@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Head from 'next/head'
 import Image from 'next/image'
 import { GetServerSidePropsContext } from 'next'
@@ -18,6 +18,7 @@ import DraggablePoint from '@components/DraggablePoint'
 import Spinner from '@components/Spinner'
 import ReadModal from '@components/Modal/ReadModal'
 import { SelectedDeclarationType } from 'src/types/types'
+import { getTotalCount } from 'src/lib/totalCount'
 
 interface HomeProps {}
 
@@ -49,16 +50,30 @@ export default function Home({}: HomeProps) {
     () => findDeclarations(userId!),
     {
       enabled: !!userId,
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
     }
   )
 
-  const onClickHandler = ({ tag, declaration }: SelectedDeclarationType) => {
-    setReadModalOepn(true)
-    setSelectedDeclaration({
-      tag,
-      declaration,
-    })
-  }
+  const { isLoading: countLoading, data: totalCount } = useQuery(
+    'getTotalCount',
+    getTotalCount,
+    {
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
+    }
+  )
+
+  const onClickHandler = useCallback(
+    ({ tag, declaration }: SelectedDeclarationType) => {
+      setReadModalOepn(true)
+      setSelectedDeclaration({
+        tag,
+        declaration,
+      })
+    },
+    [setSelectedDeclaration]
+  )
 
   return (
     <Layout>
@@ -84,7 +99,7 @@ export default function Home({}: HomeProps) {
       />
 
       <div className="relative w-full h-[calc(100%-5rem)] top-20 px-4 overflow-hidden">
-        <Header count={0} />
+        <Header count={totalCount?.published || 0} />
 
         <div className="relative w-full h-[calc(100%-10rem)]" ref={boardRef}>
           {isLoading ? (
@@ -117,7 +132,11 @@ export default function Home({}: HomeProps) {
               />
             ))
           ) : (
-            <h1>데이터없어요</h1>
+            <div className="absolute bottom-0 right-0">
+              <h1 className="bg-red-500 text-white px-6 py-2 ">
+                나의 예언적 선포문을 작성해 보세요 👇
+              </h1>
+            </div>
           )}
         </div>
         <FloatingActionButton setOepn={setAddModalOepn} />

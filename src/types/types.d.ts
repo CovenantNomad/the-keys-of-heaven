@@ -26,7 +26,7 @@ interface SelectedDeclarationType {
   declaration: string
 }
 
-interface TestimonyType {
+interface TestimonyFormType {
   content: string
   createdAt: FieldValue
 }

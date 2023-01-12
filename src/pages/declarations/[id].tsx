@@ -1,36 +1,43 @@
-import DeclarationForm from '@components/InputForm/DeclarationForm'
-import Layout from '@components/Layout'
-import Spinner from '@components/Spinner'
+import React, { useCallback, useEffect, useState } from 'react'
+import Head from 'next/head'
+import { useRouter } from 'next/router'
 import {
-  arrayUnion,
-  collection,
+  arrayRemove,
   deleteDoc,
+  deleteField,
   doc,
   runTransaction,
   serverTimestamp,
   updateDoc,
 } from 'firebase/firestore'
+import { db } from 'src/config/firebaseConfig'
 import { debounce } from 'lodash'
-import Head from 'next/head'
-import { useRouter } from 'next/router'
-import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-hot-toast'
 import { useQuery, useQueryClient } from 'react-query'
-import { db } from 'src/config/firebaseConfig'
 import useAuthState from 'src/hooks/useAuthState'
+import { DeclarationFormType, TestimonyFormType } from 'src/types/types'
 import { findDeclaration } from 'src/lib/declarations'
-import { DeclarationFormType, TestimonyType } from 'src/types/types'
-import { formatDate } from 'src/utils'
+import { countRef } from 'src/lib/totalCount'
 import Alert from '@components/Alert'
+import Button from '@components/Button'
+import Testimony from '@components/Testimony'
+import CardHeader from '@components/CardHeader'
+import Declaration from '@components/Declaration/Declaration'
+import DeclarationForm from '@components/InputForm/DeclarationForm'
+import Layout from '@components/Layout'
+import Spinner from '@components/Spinner'
+import TestimonyForm from '@components/InputForm/TestimonyForm'
 
 interface DetailProps {}
 
 const Detail = ({}: DetailProps) => {
   const [openAlert, setOpenAlert] = useState(false)
+  const [openTestimonyAlert, setOpenTestimonyAlert] = useState(false)
   const [openInput, setOpenInput] = useState(false)
   const [count, setCount] = useState<number>(0)
   const [editMode, setEditMode] = useState(false)
+  const [testimonyEditMode, setTestimonyEditMode] = useState(false)
   const [docId, setDocId] = useState<string | undefined>(undefined)
   const [user] = useAuthState()
   const userId = user?.uid
@@ -38,13 +45,13 @@ const Detail = ({}: DetailProps) => {
   const queryClient = useQueryClient()
 
   const {
-    handleSubmit,
-    register,
-    getValues,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<TestimonyType>()
+    handleSubmit: testimonyHandleSubmit,
+    register: testimonyRegister,
+    getValues: testimonyGetValues,
+    setValue: testimonySetValue,
+    reset: testimonyReset,
+    formState: { errors: testimonyErrors },
+  } = useForm<TestimonyFormType>()
 
   const {
     handleSubmit: editHandleSubmit,
@@ -64,23 +71,6 @@ const Detail = ({}: DetailProps) => {
       cacheTime: 10 * 60 * 1000,
     }
   )
-
-  const onSubmitHandler = async (form: TestimonyType) => {
-    if (userId && docId) {
-      const docRef = doc(db, 'users', userId, 'declarations', docId)
-      await updateDoc(docRef, {
-        testimony: {
-          content: form.content,
-          createdAt: serverTimestamp(),
-        },
-      })
-      toast.success('예언적 선포문이 작성되었습니다')
-      queryClient.invalidateQueries(['findDeclaration', [userId, docId]])
-      setOpenInput(false)
-    } else {
-      toast.error(`로그인 상태가 아닙니다.${'\n'} 로그인 후 진행해주세요.`)
-    }
-  }
 
   const onEditsubmitHandler = async (form: DeclarationFormType) => {
     if (user) {
@@ -125,15 +115,29 @@ const Detail = ({}: DetailProps) => {
     }
   }
 
-  const onDeleteHandler = async () => {
+  const onDeleteHandler = useCallback(async () => {
     if (user) {
       try {
-        if (userId && docId) {
-          const docRef = doc(db, 'users', userId, 'declarations', docId)
-          await deleteDoc(docRef)
-          toast.success('예언적 선포문을 삭제했습니다')
-        }
+        await runTransaction(db, async (transition) => {
+          if (userId && docId) {
+            const docRef = doc(db, 'users', userId, 'declarations', docId)
+            await deleteDoc(docRef)
+            toast.success('예언적 선포문을 삭제했습니다')
+          }
+
+          const countDoc = await transition.get(countRef)
+
+          if (countDoc.exists()) {
+            const newCount = countDoc.data().published - 1
+            transition.update(countRef, { published: newCount })
+            transition.update(countRef, {
+              _ref: arrayRemove(docId),
+            })
+          }
+        })
+
         queryClient.invalidateQueries(['findDeclarations', userId])
+        queryClient.invalidateQueries('getTotalCount')
         router.push('/declarations')
       } catch (error) {
         console.log(error)
@@ -142,7 +146,7 @@ const Detail = ({}: DetailProps) => {
     } else {
       toast.error(`로그인 상태가 아닙니다.${'\n'} 로그인 해주세요.`)
     }
-  }
+  }, [docId, userId])
 
   const onCountWord = debounce(() => {
     setCount(editGetValeus().comments.length)
@@ -158,6 +162,76 @@ const Detail = ({}: DetailProps) => {
     }
   }, 300)
 
+  const onTestimonySubmitHandler = async (form: TestimonyFormType) => {
+    if (userId && docId) {
+      const docRef = doc(db, 'users', userId, 'declarations', docId)
+      await updateDoc(docRef, {
+        hasTesimony: true,
+        testimony: {
+          content: form.content,
+          createdAt: serverTimestamp(),
+        },
+      })
+      toast.success('예언적 선포문이 작성되었습니다')
+      testimonyReset({ content: '' })
+      queryClient.invalidateQueries(['findDeclaration', [userId, docId]])
+      setOpenInput(false)
+    } else {
+      toast.error(`로그인 상태가 아닙니다.${'\n'} 로그인 후 진행해주세요.`)
+    }
+  }
+
+  const onTestimonyEditSubmitHandler = async (form: TestimonyFormType) => {
+    if (user) {
+      try {
+        if (userId && docId && data) {
+          const docRef = doc(db, 'users', userId, 'declarations', docId)
+
+          if (form.content !== data.testimony.content) {
+            await updateDoc(docRef, {
+              testimony: {
+                content: form.content,
+                createdAt: serverTimestamp(),
+              },
+            })
+            toast.success('나의 간증문이 수정되었습니다')
+            queryClient.invalidateQueries(['findDeclaration', [userId, docId]])
+          }
+        }
+        setTestimonyEditMode(false)
+      } catch (error) {
+        console.log(error)
+        toast.error('간증문 수정 중 오류가 발생했습니다.')
+      }
+    } else {
+      toast.error(`로그인 상태가 아닙니다.${'\n'} 로그인 해주세요.`)
+    }
+  }
+
+  const onTestimonyDeleteHandler = async () => {
+    if (user) {
+      try {
+        if (userId && docId) {
+          const docRef = doc(db, 'users', userId, 'declarations', docId)
+          await updateDoc(docRef, {
+            hasTesimony: false,
+            testimony: deleteField(),
+          })
+        }
+        toast.success('해당 간증문을 삭제하였습니다')
+        queryClient.invalidateQueries(['findDeclaration', [userId, docId]])
+        setOpenTestimonyAlert(false)
+      } catch (error) {
+        console.log(error)
+        toast.error('간증문 삭제 중 오류가 발생했습니다.')
+        setOpenTestimonyAlert(false)
+      }
+    } else {
+      toast.error(`로그인 상태가 아닙니다.${'\n'} 로그인 해주세요.`)
+      setOpenTestimonyAlert(false)
+    }
+  }
+
   useEffect(() => {
     if (router.query.id !== undefined && typeof router.query.id === 'string') {
       setDocId(router.query.id)
@@ -169,6 +243,9 @@ const Detail = ({}: DetailProps) => {
       editSetValue('comments', data.declaration)
       editSetValue('tag', data.tag)
       setCount(data.declaration.length)
+      if (data.testimony) {
+        testimonySetValue('content', data.testimony.content)
+      }
     }
   }, [data])
 
@@ -187,7 +264,7 @@ const Detail = ({}: DetailProps) => {
             onClick={() => router.back()}
             className="px-4 py-2 bg-yellow-500 text-white rounded-md"
           >
-            돌아가기
+            선포문 목록으로 가기
           </button>
         </div>
 
@@ -197,41 +274,13 @@ const Detail = ({}: DetailProps) => {
           <>
             {!editMode ? (
               <div className="py-6 px-4 border rounded-md shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg tracking-wide">2023 My Declaration</h3>
-                  <div className="inline-flex gap-x-3">
-                    <button
-                      onClick={() => setEditMode(!editMode)}
-                      type="button"
-                      className="font-medium text-teal-600 px-2"
-                    >
-                      수정
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!user}
-                      onClick={() => setOpenAlert(true)}
-                      className="font-medium text-red-600 px-2"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-6">
-                  <div className="flex items-center gap-x-8 py-3 border-b ">
-                    <p className="text-gray-500">태그</p>
-                    <p>#{data.tag}</p>
-                  </div>
-                  <div className="pt-3 pb-6 border-b">
-                    <p className="text-gray-500 mb-2">예언적 선포문</p>
-                    <p>{data.declaration}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 pt-3">
-                      {formatDate(data.createdAt.seconds)}
-                    </p>
-                  </div>
-                </div>
+                <CardHeader
+                  title={'2023 My Declaration'}
+                  user={user!}
+                  onEditClick={() => setEditMode(!editMode)}
+                  onDeleteClick={() => setOpenAlert(true)}
+                />
+                <Declaration data={data} />
               </div>
             ) : (
               <div className="py-6 px-4 border rounded-md shadow-sm">
@@ -251,62 +300,37 @@ const Detail = ({}: DetailProps) => {
             )}
 
             {data.testimony ? (
-              <div className="mt-6">
-                <h4 className="mb-2 text-lg">나의 간증</h4>
-                <div className="border px-4 py-2 rounded-lg shadow-md">
-                  <p className="pt-2 pb-4">{data.testimony.content}</p>
-                  <p className="border-t py-2 text-sm text-gray-500">
-                    2013.01.03
-                  </p>
-                </div>
-              </div>
+              <Testimony
+                testimony={data.testimony}
+                user={user!}
+                editMode={testimonyEditMode}
+                onEditClick={() => setTestimonyEditMode(!testimonyEditMode)}
+                onDeleteClick={() => setOpenTestimonyAlert(true)}
+                handleSubmit={testimonyHandleSubmit}
+                submitHandler={onTestimonyEditSubmitHandler}
+                register={testimonyRegister}
+                reset={testimonyReset}
+                getValues={testimonyGetValues}
+                errors={testimonyErrors}
+              />
             ) : (
               <div className="mt-4">
                 {!openInput ? (
-                  <button
+                  <Button
                     onClick={() => setOpenInput(true)}
-                    className="px-4 py-2 bg-teal-500 text-white"
-                  >
-                    간증문 작성하기
-                  </button>
+                    title="간증문 작성하기"
+                    color="teal"
+                  />
                 ) : (
-                  <form
-                    onSubmit={handleSubmit(onSubmitHandler)}
-                    className="w-full"
-                  >
-                    <div>
-                      <label htmlFor="content" className="sr-only">
-                        간증문
-                      </label>
-                      <textarea
-                        id="content"
-                        rows={10}
-                        placeholder={'간증문을 입력해 주세요.'}
-                        {...register('content', {
-                          required: true,
-                        })}
-                        className="w-full border pt-3 px-2 focus:outline-none focus:ring-primary focus:border-primary"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-x-6 mt-2">
-                      <button
-                        type="reset"
-                        className="px-4 py-2 bg-red-500 text-white"
-                        onClick={() => {
-                          setOpenInput(false)
-                          reset({ content: '' })
-                        }}
-                      >
-                        취소
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-teal-500 text-white"
-                      >
-                        작성완료
-                      </button>
-                    </div>
-                  </form>
+                  <TestimonyForm
+                    handleSubmit={testimonyHandleSubmit}
+                    submitHandler={onTestimonySubmitHandler}
+                    register={testimonyRegister}
+                    setOpen={setOpenInput}
+                    reset={testimonyReset}
+                    getValues={testimonyGetValues}
+                    errors={testimonyErrors}
+                  />
                 )}
               </div>
             )}
@@ -320,6 +344,14 @@ const Detail = ({}: DetailProps) => {
           open={openAlert}
           setOpen={setOpenAlert}
           onActionHandler={onDeleteHandler}
+        />
+      )}
+      {openTestimonyAlert && (
+        <Alert
+          isTestimony
+          open={openTestimonyAlert}
+          setOpen={setOpenTestimonyAlert}
+          onActionHandler={onTestimonyDeleteHandler}
         />
       )}
     </Layout>
