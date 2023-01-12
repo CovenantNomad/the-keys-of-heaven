@@ -52,7 +52,6 @@ const TestimonyForm = ({
       <div className="flex justify-end gap-x-4 mt-2">
         <Button
           type="reset"
-          color="red"
           title="취소"
           round
           onClick={() => {
@@ -60,7 +59,7 @@ const TestimonyForm = ({
             reset({ content: '' })
           }}
         />
-        <Button type="submit" color="teal" title="작성완료" round />
+        <Button type="submit" title="작성완료" round prime />
       </div>
     </form>
   )

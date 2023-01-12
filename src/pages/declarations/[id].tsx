@@ -319,7 +319,7 @@ const Detail = ({}: DetailProps) => {
                   <Button
                     onClick={() => setOpenInput(true)}
                     title="간증문 작성하기"
-                    color="teal"
+                    prime
                   />
                 ) : (
                   <TestimonyForm
