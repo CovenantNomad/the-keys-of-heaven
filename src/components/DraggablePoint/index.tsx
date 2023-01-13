@@ -52,15 +52,39 @@ const DraggablePoint = ({
       onDragEnd={debounce(async () => {
         if (circleRef.current !== null) {
           const { x, y } = circleRef.current.getBoundingClientRect()
+          console.log('X 위치:', x, 'Y 위치:', y)
           circleX.current =
-            x <= 0 ? 0 : x >= boardWidth.current ? boardWidth.current - 40 : x
+            x <= boardX.current
+              ? boardX.current
+              : x >= boardWidth.current
+              ? boardWidth.current - 40
+              : x
           circleY.current =
-            y <= 0 ? 0 : y >= boardHeight.current ? boardHeight.current - 40 : y
+            y <= boardY.current
+              ? boardY.current
+              : y >= boardY.current + boardHeight.current
+              ? boardY.current + boardHeight.current - 40
+              : y
         }
 
-        console.log(circleX.current)
-        console.log(boardX.current)
-        console.log(boardWidth.current)
+        console.log(
+          '계산된 X 위치:',
+          circleX.current,
+          '계산된 Y 위치:',
+          circleY.current
+        )
+        console.log(
+          '보더 X 위치: ',
+          boardX.current,
+          '보더 Y 위치: ',
+          boardY.current
+        )
+        console.log(
+          '보더 넓이: ',
+          boardWidth.current,
+          '보더 높이:',
+          boardHeight.current
+        )
 
         // console.log(Math.round(((circleX.current - boardX.current) / boardWidth.current) * 1000) / 1000)
 
@@ -73,18 +97,18 @@ const DraggablePoint = ({
             ((circleY.current - boardY.current) / boardHeight.current) * 1000
           ) / 1000
 
-        // const docRef = doc(
-        //   db,
-        //   'users',
-        //   item.userId,
-        //   'declarations',
-        //   item.documentId
-        // )
+        const docRef = doc(
+          db,
+          'users',
+          item.userId,
+          'declarations',
+          item.documentId
+        )
 
-        // await updateDoc(docRef, {
-        //   initialX: valueX,
-        //   initialY: valueY,
-        // })
+        await updateDoc(docRef, {
+          initialX: valueX,
+          initialY: valueY,
+        })
       }, 500)}
       whileTap={{ cursor: 'grabbing' }}
       onClick={onClickHandler}

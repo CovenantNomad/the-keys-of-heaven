@@ -28,20 +28,22 @@ import DeclarationForm from '@components/InputForm/DeclarationForm'
 import Layout from '@components/Layout'
 import Spinner from '@components/Spinner'
 import TestimonyForm from '@components/InputForm/TestimonyForm'
+import { NextPageContext } from 'next'
 
-interface DetailProps {}
+interface DetailProps {
+  docId: string
+}
 
-const Detail = ({}: DetailProps) => {
+const Detail = ({ docId }: DetailProps) => {
+  const router = useRouter()
   const [openAlert, setOpenAlert] = useState(false)
   const [openTestimonyAlert, setOpenTestimonyAlert] = useState(false)
   const [openInput, setOpenInput] = useState(false)
   const [count, setCount] = useState<number>(0)
   const [editMode, setEditMode] = useState(false)
   const [testimonyEditMode, setTestimonyEditMode] = useState(false)
-  const [docId, setDocId] = useState<string | undefined>(undefined)
-  const [user] = useAuthState()
+  const [user, _, isLoading] = useAuthState()
   const userId = user?.uid
-  const router = useRouter()
   const queryClient = useQueryClient()
 
   const {
@@ -62,7 +64,7 @@ const Detail = ({}: DetailProps) => {
     formState: { errors: editErrors },
   } = useForm<DeclarationFormType>()
 
-  const { isLoading, data } = useQuery(
+  const { isLoading: dataLoading, data } = useQuery(
     ['findDeclaration', [userId, docId]],
     () => findDeclaration(userId!, docId!),
     {
@@ -233,12 +235,6 @@ const Detail = ({}: DetailProps) => {
   }
 
   useEffect(() => {
-    if (router.query.id !== undefined && typeof router.query.id === 'string') {
-      setDocId(router.query.id)
-    }
-  }, [])
-
-  useEffect(() => {
     if (data) {
       editSetValue('comments', data.declaration)
       editSetValue('tag', data.tag)
@@ -248,6 +244,15 @@ const Detail = ({}: DetailProps) => {
       }
     }
   }, [data])
+
+  useEffect(() => {
+    if (!user) {
+      toast.error('로그인 후 이용해주세요')
+      setTimeout(() => {
+        router.push('/')
+      }, 4000)
+    }
+  }, [])
 
   return (
     <Layout>
@@ -262,13 +267,27 @@ const Detail = ({}: DetailProps) => {
         <div className="mb-6">
           <button
             onClick={() => router.back()}
-            className="px-4 py-2 bg-yellow-500 text-white rounded-md"
+            className="text-black flex cursor-pointer"
           >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 20 20"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5 mr-2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+              />
+            </svg>
             선포문 목록으로 가기
           </button>
         </div>
 
-        {isLoading ? (
+        {dataLoading ? (
           <Spinner />
         ) : data ? (
           <>
@@ -336,7 +355,7 @@ const Detail = ({}: DetailProps) => {
             )}
           </>
         ) : (
-          <p>데이터없음</p>
+          <Spinner />
         )}
       </div>
       {openAlert && (
@@ -359,3 +378,10 @@ const Detail = ({}: DetailProps) => {
 }
 
 export default Detail
+
+Detail.getInitialProps = async (ctx: NextPageContext) => {
+  const { id } = ctx.query
+  return {
+    docId: id,
+  }
+}

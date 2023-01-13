@@ -7,7 +7,7 @@ interface StatsProps {
 
 const Stats = ({ name, stat }: StatsProps) => {
   return (
-    <div className="rounded-lg bg-white border px-4 py-5 shadow-sm">
+    <div className="rounded-lg bg-white border px-6 py-5 shadow-sm flex justify-between items-center">
       <p className="truncate text-sm font-medium text-gray-500">{name}</p>
       <p className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
         {stat}

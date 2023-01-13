@@ -5,7 +5,9 @@ import Sidebar from '@components/Sidebar'
 import Spinner from '@components/Spinner'
 import Stats from '@components/Stats'
 import Head from 'next/head'
-import React from 'react'
+import { useRouter } from 'next/router'
+import React, { useEffect } from 'react'
+import { toast } from 'react-hot-toast'
 import { useQuery } from 'react-query'
 import useAuthState from 'src/hooks/useAuthState'
 import { findDeclarations } from 'src/lib/declarations'
@@ -13,10 +15,11 @@ import { findDeclarations } from 'src/lib/declarations'
 interface DeclarationsProps {}
 
 const Declarations = ({}: DeclarationsProps) => {
-  const [user] = useAuthState()
+  const router = useRouter()
+  const [user, _, isLoading] = useAuthState()
   const userId = user?.uid
 
-  const { isLoading, data } = useQuery(
+  const { isLoading: dataLoading, data } = useQuery(
     ['findDeclarations', userId],
     () => findDeclarations(userId!),
     {
@@ -25,6 +28,15 @@ const Declarations = ({}: DeclarationsProps) => {
       cacheTime: 10 * 60 * 1000,
     }
   )
+
+  useEffect(() => {
+    if (!user) {
+      toast.error('로그인 후 이용해주세요')
+      setTimeout(() => {
+        router.push('/')
+      }, 4000)
+    }
+  }, [])
 
   return (
     <Layout>
@@ -36,7 +48,7 @@ const Declarations = ({}: DeclarationsProps) => {
       </Head>
 
       <div className="relative h-[calc(100%-5rem)] top-20 py-8 px-4 overflow-y-scroll">
-        {isLoading ? (
+        {dataLoading ? (
           <Spinner />
         ) : (
           data && (

@@ -99,10 +99,10 @@ export default function Home({}: HomeProps) {
         priority={true}
       />
 
-      <div className="relative w-full h-[calc(100%-5rem)] top-20 px-4 overflow-hidden">
+      <div className="relative w-full h-[calc(100vh-5rem)] top-20 px-4 overflow-hidden">
         <Header count={totalCount?.published || 0} />
 
-        <div className="relative w-full h-[calc(100%-10rem)]" ref={boardRef}>
+        <div className="relative w-full h-[calc(100vh-10rem)]" ref={boardRef}>
           {isLoading ? (
             <Spinner />
           ) : !user ? (

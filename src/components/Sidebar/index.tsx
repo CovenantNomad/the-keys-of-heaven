@@ -71,7 +71,7 @@ const Sidebar = ({}: SidebarProps) => {
         opacity: 0,
         transition: { duration: 0.4 },
       }}
-      className="absolute top-20 w-full h-full z-50 flex flex-col items-end px-8 py-8 bg-[#1e3c72] "
+      className="absolute top-20 w-full h-screen z-50 flex flex-col items-end px-8 py-8 bg-[#1e3c72] "
     >
       <ul className="text-end flex flex-col gap-y-6">
         <li className="text-white">
@@ -79,13 +79,17 @@ const Sidebar = ({}: SidebarProps) => {
             <button onClick={() => setOpen(false)}>첫화면</button>
           </Link>
         </li>
+        {user && (
+          <li className="text-white">
+            <Link href={'/declarations'}>
+              <button onClick={() => setOpen(false)} disabled={!user}>
+                예언적 선포문 보기
+              </button>
+            </Link>
+          </li>
+        )}
         <li className="text-white">
-          <Link href={'/declarations'}>
-            <button onClick={() => setOpen(false)}>예언적 선포문 보기</button>
-          </Link>
-        </li>
-        <li className="text-white">
-          <Link href={'/declarations'}>
+          <Link href={'/user-guide'}>
             <button onClick={() => setOpen(false)}>사용설명서</button>
           </Link>
         </li>
