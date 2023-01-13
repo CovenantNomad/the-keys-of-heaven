@@ -30,7 +30,7 @@ const Declarations = ({}: DeclarationsProps) => {
   )
 
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
       toast.error('로그인 후 이용해주세요')
       setTimeout(() => {
         router.push('/')

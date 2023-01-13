@@ -246,7 +246,7 @@ const Detail = ({ docId }: DetailProps) => {
   }, [data])
 
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
       toast.error('로그인 후 이용해주세요')
       setTimeout(() => {
         router.push('/')
