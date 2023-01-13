@@ -16,8 +16,5 @@ module.exports = {
     require('@tailwindcss/forms')({
       strategy: 'class',
     }),
-    'tailwindcss',
-    'autoprefixer',
-    'postcss-100vh-fix',
   ],
 }
