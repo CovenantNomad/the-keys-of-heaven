@@ -19,6 +19,7 @@ import Spinner from '@components/Spinner'
 import ReadModal from '@components/Modal/ReadModal'
 import { SelectedDeclarationType } from 'src/types/types'
 import { getTotalCount } from 'src/lib/totalCount'
+import { useWindowSize } from 'src/hooks/useWindowSize'
 
 interface HomeProps {}
 
